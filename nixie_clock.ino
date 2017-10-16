@@ -82,14 +82,11 @@ uint32_t minuteToColor(byte currentMinute) {
   }
 
   // red
-  if ( currentMinute >= 10 && currentMinute <= 30 ) {
-    red = mapbyte(currentMinute, 10, 30, 0, 255);
-  }
-  else if ( currentMinute > 30 && currentMinute <= 50 ) {
-    red = mapbyte(currentMinute, 31, 50, 255, 0);
+  if (currentMinute <= 30 ) {
+    red = mapbyte(currentMinute, 0, 30, 0, 255);
   }
   else {
-    red = 0;
+    red = mapbyte(currentMinute, 31, 59, 255, 0);
   }
 
   // green
