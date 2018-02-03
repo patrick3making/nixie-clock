@@ -20,13 +20,20 @@ uint32_t colors[8] = {
 void setup() {
 #ifdef DEBUG
   Serial.begin(9600);
-  Serial.println("Clock");
+  Serial.println("Welcome to the Nixie Clock");
 #endif
   rtc.begin();
-  rtc.autoTime();
+  //setRTCTime();
   rtc.set12Hour();
 #ifdef DEBUG
-  Serial.println("RTC");
+  rtc.update();
+  Serial.println("RTC Setup");
+  Serial.print("  12 hour mode: ");
+  Serial.println(rtc.is12Hour());
+  Serial.print("  Current Time: ");
+  Serial.println(rtc.hour());
+  Serial.print(":");
+  Serial.println(rtc.minute());
 #endif
   pixels.begin();
   pixels.clear();
@@ -40,8 +47,8 @@ void setup() {
     numbers[h - 1][1] = 2 * (13 - h) - 1;
   }
 
-  lastMinute = 0;
-  testLights(50);
+  lastMinute = 70;
+  testLights(30);
 }
 
 void loop() {
@@ -52,17 +59,32 @@ void loop() {
 }
 
 void showTime() {
-  if ( rtc.minute() != lastMinute) {
+  int currentMinute = rtc.minute();
+  if ( currentMinute != lastMinute) {
+#ifdef DEBUG
+    Serial.print("Time to display: ");
+    Serial.print(rtc.hour());
+    Serial.print(":");
+    Serial.println(rtc.minute());
+#endif
+    uint8_t currentHour = rtc.hour();
     uint32_t color;
-    color = minuteToColor(rtc.minute());
-    showNumber(rtc.hour(), color);
+    lastMinute = currentMinute;
+    color = minuteToColor(currentMinute);
+    if (currentHour > 12) {
+#ifdef DEBUG
+      Serial.println("Hour over 12");
+#endif
+      currentHour -= 12;
+    }
+    showNumber(currentHour, color);
   }
 }
 
 void showNumber(uint8_t number, uint32_t color) {
   pixels.clear();
-  uint8_t pixelNum;
-  for ( int i = 0; i < 2; i++) {
+  int pixelNum;
+  for ( uint8_t i = 0; i < 2; i++) {
     pixelNum = numbers[number - 1][i];
     pixels.setPixelColor(pixelNum, color);
   }
@@ -75,7 +97,7 @@ uint32_t minuteToColor(byte currentMinute) {
 
   // blue
   if ( currentMinute <= 40 ) {
-    blue = mapbyte(currentMinute, 0, 40, 255, 0);
+    blue = map(currentMinute, 0, 40, 255, 0);
   }
   else {
     blue = 0;
@@ -83,21 +105,21 @@ uint32_t minuteToColor(byte currentMinute) {
 
   // red
   if (currentMinute <= 30 ) {
-    red = mapbyte(currentMinute, 0, 30, 0, 255);
+    red = map(currentMinute, 0, 30, 50, 255);
   }
   else {
-    red = mapbyte(currentMinute, 31, 59, 255, 0);
+    red = map(currentMinute, 31, 59, 255, 50);
   }
 
   // green
   if ( currentMinute >= 20 ) {
-    green = mapbyte(currentMinute, 20, 59, 0, 255);
+    green = map(currentMinute, 20, 59, 25, 255);
   }
   else {
     green = 0;
   }
 
-#ifdef DEBUG
+#if DEBUG >= 2
   Serial.print("red: ");
   Serial.println(red);
   Serial.print("green: ");
@@ -106,7 +128,7 @@ uint32_t minuteToColor(byte currentMinute) {
   Serial.println(blue);
 #endif
 
-  color = pixels.Color(red, blue, green);
+  color = pixels.Color(red, green, blue);
   return color;
 }
 
@@ -126,7 +148,15 @@ void testLights(uint8_t dwell) {
   }
 }
 
-byte mapbyte(byte x, byte in_min, byte in_max, byte out_min, byte out_max)
-{
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+void setRTCTime() {
+  int hour = 18;
+  int minute = 12;
+  int second = 00;
+  int day = 6; // Sunday=1, Monday=2, ..., Saturday=7.
+  int date = 2;
+  int month = 2;
+  int year = 18;
+
+  rtc.setTime(second, minute, hour, day, date, month, year);
 }
+
