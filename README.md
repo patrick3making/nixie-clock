@@ -1,10 +1,12 @@
 # nixie-clock
 This alternative clock imitates a nixie tube by edge lighting acrylic tiles. The number on the tile indicates the current hour, and the color aproximately incates the minute.  
+![circuit drawing](https://github.com/patrick3coffee/nixie-clock/blob/master/3-20-PM.jpg?raw=true)  
   
 ## Background  
 I have access to a laser cutter at work and I wanted to use it. I searched thingiverse and found [this single led nixie digit ](https://www.thingiverse.com/thing:880429). I modified and laser cut the tiles from that design. The base and circuit assembly is my design.  
   
 # Construction
+![circuit drawing](https://github.com/patrick3coffee/nixie-clock/blob/master/inside.jpg?raw=true)  
 ## Electronics
 ![circuit drawing](https://github.com/patrick3coffee/nixie-clock/blob/master/drawing.png?raw=true)  
 The electronics are controlled by an [Arduino Pro Mini](https://sfe.i0/p11113). Time is kept by a [SparkFun RTC Module](https://sfe.io/p12708). Light is provided by some [loose WS2812](https://sfe.io/p13667)s. That LED requires some decoupling, so I soldered the power connections together in four rows and added 10uf capacitors at the beginning of each row. It's not ideal, but the seem to work well.  
