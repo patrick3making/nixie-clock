@@ -1,21 +1,11 @@
 #include <Adafruit_NeoPixel.h>
 #include <SparkFunDS1307RTC.h>
 #define DEBUG 1
+#define MINIMUM_LUX 15
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(24, A2, NEO_GRB + NEO_KHZ800);
 
 uint8_t numbers[12][2], lastMinute;
-
-uint32_t colors[8] = {
-  pixels.Color(255, 0, 0),     //red
-  pixels.Color(255, 65, 0),    //orange
-  pixels.Color(255, 125, 0),   //yellow
-  pixels.Color(0, 255, 0),     //green
-  pixels.Color(0, 255, 255),   //teal
-  pixels.Color(0, 0, 255),     //blue
-  pixels.Color(100, 0, 255),    //purple
-  pixels.Color(255, 255, 255)    //white
-};
 
 void setup() {
 #ifdef DEBUG
@@ -96,27 +86,27 @@ uint32_t minuteToColor(byte currentMinute) {
   byte red, green, blue;
 
   // blue
-  if ( currentMinute <= 40 ) {
-    blue = map(currentMinute, 0, 40, 255, 0);
+  if ( currentMinute <= 45 ) {
+    blue = map(currentMinute, 0, 45, 255, MINIMUM_LUX);
   }
   else {
-    blue = 0;
+    blue = MINIMUM_LUX;
   }
 
   // red
-  if (currentMinute <= 30 ) {
-    red = map(currentMinute, 0, 30, 50, 255);
+  if (currentMinute <= 29 ) {
+    red = map(currentMinute, 0, 29, MINIMUM_LUX, 255);
   }
   else {
-    red = map(currentMinute, 31, 59, 255, 50);
+    red = map(currentMinute, 30, 59, 255, MINIMUM_LUX);
   }
 
   // green
-  if ( currentMinute >= 20 ) {
-    green = map(currentMinute, 20, 59, 25, 255);
+  if ( currentMinute >= 15 ) {
+    green = map(currentMinute, 15, 59, MINIMUM_LUX, 255);
   }
   else {
-    green = 0;
+    green = MINIMUM_LUX;
   }
 
 #if DEBUG >= 2
