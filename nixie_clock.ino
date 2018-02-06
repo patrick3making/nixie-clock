@@ -8,22 +8,12 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(24, A2, NEO_GRB + NEO_KHZ800);
 uint8_t numbers[12][2], lastMinute;
 
 void setup() {
-#ifdef DEBUG
   Serial.begin(9600);
-  Serial.println("Welcome to the Nixie Clock");
-#endif
+
   rtc.begin();
-  //setRTCTime();
-  rtc.set12Hour();
+  rtc.set24Hour();
 #ifdef DEBUG
   rtc.update();
-  Serial.println("RTC Setup");
-  Serial.print("  12 hour mode: ");
-  Serial.println(rtc.is12Hour());
-  Serial.print("  Current Time: ");
-  Serial.println(rtc.hour());
-  Serial.print(":");
-  Serial.println(rtc.minute());
 #endif
   pixels.begin();
   pixels.clear();
@@ -39,12 +29,17 @@ void setup() {
 
   lastMinute = 70;
   testLights(30);
+  Serial.println("Welcome to the Nixie Clock");
+  Serial.println("Enter \"?\" to print help message");
+  printDate();
 }
 
 void loop() {
   rtc.update();
   showTime();
-
+  if (Serial.available()) {
+    menuSelect();
+  }
   delay(1000);
 }
 
@@ -52,19 +47,13 @@ void showTime() {
   int currentMinute = rtc.minute();
   if ( currentMinute != lastMinute) {
 #ifdef DEBUG
-    Serial.print("Time to display: ");
-    Serial.print(rtc.hour());
-    Serial.print(":");
-    Serial.println(rtc.minute());
+    printTime();
 #endif
     uint8_t currentHour = rtc.hour();
     uint32_t color;
     lastMinute = currentMinute;
     color = minuteToColor(currentMinute);
     if (currentHour > 12) {
-#ifdef DEBUG
-      Serial.println("Hour over 12");
-#endif
       currentHour -= 12;
     }
     showNumber(currentHour, color);
@@ -85,12 +74,12 @@ uint32_t minuteToColor(byte currentMinute) {
   uint32_t color;
   byte red, green, blue;
 
-  // blue
-  if ( currentMinute <= 45 ) {
-    blue = map(currentMinute, 0, 45, 255, MINIMUM_LUX);
+  // green
+  if ( currentMinute <= 40 ) {
+    green = map(currentMinute, 0, 40, 255, MINIMUM_LUX);
   }
   else {
-    blue = MINIMUM_LUX;
+    green = MINIMUM_LUX;
   }
 
   // red
@@ -101,12 +90,12 @@ uint32_t minuteToColor(byte currentMinute) {
     red = map(currentMinute, 30, 59, 255, MINIMUM_LUX);
   }
 
-  // green
-  if ( currentMinute >= 15 ) {
-    green = map(currentMinute, 15, 59, MINIMUM_LUX, 255);
+  // blue
+  if ( currentMinute >= 20 ) {
+    blue = map(currentMinute, 20, 59, MINIMUM_LUX, 255);
   }
   else {
-    green = MINIMUM_LUX;
+    blue = MINIMUM_LUX;
   }
 
 #if DEBUG >= 2
@@ -138,15 +127,146 @@ void testLights(uint8_t dwell) {
   }
 }
 
-void setRTCTime() {
-  int hour = 18;
-  int minute = 12;
-  int second = 00;
-  int day = 6; // Sunday=1, Monday=2, ..., Saturday=7.
-  int date = 2;
-  int month = 2;
-  int year = 18;
+/*
+   Menu Commands
+*/
 
-  rtc.setTime(second, minute, hour, day, date, month, year);
+void printHelpMessage(){
+  printTime();
+  Serial.println("");
+  Serial.println("Enter \"1\" to set time.");
+  Serial.println("Enter \"2\" to set date");
+  Serial.println("");
+  Serial.println("!!! turn off all line endings !!!");
+}
+
+void menuSelect() {
+  byte menuSelection = Serial.read();
+  switch (menuSelection) {
+    case '?':
+      printHelpMessage();
+      break;
+    case '1':
+      userSetTime();
+      break;
+    case '2':
+      userSetDate();
+      break;
+    default:
+      Serial.print(menuSelection);
+      Serial.println(" is an unknown command");
+      printHelpMessage();
+      break;
+  }
+}
+
+void printTime() {
+  //get current time
+  rtc.update();
+  int s = rtc.second();
+  int m = rtc.minute();
+  int h = rtc.hour();
+
+  //print time
+  Serial.println("");
+  Serial.print("Current time is: ");
+  Serial.print(h);
+  Serial.print(":");
+  Serial.print(m);
+  Serial.print(":");
+  Serial.println(s);
+}
+
+void printDate() {
+  //get current date
+  rtc.update();
+  int ddd = rtc.day();
+  int d = rtc.date();
+  int m = rtc.month();
+  int y = rtc.year();
+  //String dayString = getDayString(ddd);
+  String dayString = dayIntToStr[ddd];
+
+  //print date
+  Serial.println("");
+  Serial.print("Today's date is: ");
+  Serial.print(dayString);
+  Serial.print(" ");
+  Serial.print(y);
+  Serial.print("-");
+  Serial.print(m);
+  Serial.print("-");
+  Serial.println(d);
+}
+
+void printDayStrings() {
+  for (int i = 1; i < 8; i++) {
+    Serial.print(i);
+    Serial.print(" - ");
+    Serial.println(dayIntToStr[i]);
+  }
+}
+
+void userSetTime() {
+  Serial.println("Enter hour (24 hour format):");
+  while (!Serial.available()) {
+    delay(10);
+  }
+  int newHour = Serial.parseInt();
+  Serial.println("Enter minute:");
+  while (!Serial.available()) {
+    delay(10);
+  }
+  int newMinute = Serial.parseInt();
+  setRTCTime(newHour, newMinute);
+}
+
+void setRTCTime(int hour, int minute) {
+  int day = rtc.day();
+  int date = rtc.date();
+  int month = rtc.month();
+  int year = rtc.year();
+
+  rtc.setTime(0, minute, hour, day, date, month, year);
+  Serial.println("New time set");
+  printTime();
+}
+
+void userSetDate() {
+  Serial.println("Enter day of the week");
+  printDayStrings();
+  while (!Serial.available()) {
+    delay(10);
+  }
+  int newDay = Serial.parseInt();
+
+  Serial.println("Enter day of month:");
+  while (!Serial.available()) {
+    delay(10);
+  }
+  int newDate = Serial.parseInt();
+
+  Serial.println("Enter month:");
+  while (!Serial.available()) {
+    delay(10);
+  }
+  int newMonth = Serial.parseInt();
+
+  Serial.println("Enter year:");
+  while (!Serial.available()) {
+    delay(10);
+  }
+  int newYear = Serial.parseInt();
+
+  setRTCDate(newDay, newDate, newMonth, newYear);
+  printDate();
+}
+
+void setRTCDate(int day, int date, int month, int year) {
+  int minute = rtc.minute();
+  int hour = rtc.hour();
+
+  rtc.setTime(0, minute, hour, day, date, month, year);
+  Serial.println("New date set");
 }
 
