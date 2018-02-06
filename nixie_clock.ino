@@ -131,7 +131,7 @@ void testLights(uint8_t dwell) {
    Menu Commands
 */
 
-void printHelpMessage(){
+void printHelpMessage() {
   printTime();
   Serial.println("");
   Serial.println("Enter \"1\" to set time.");
@@ -158,6 +158,7 @@ void menuSelect() {
       printHelpMessage();
       break;
   }
+  Serial.println("Enter \"?\" to print help message");
 }
 
 void printTime() {
@@ -200,7 +201,7 @@ void printDate() {
 }
 
 void printDayStrings() {
-  for (int i = 1; i < 8; i++) {
+  for (int i = 0; i < 7; i++) {
     Serial.print(i);
     Serial.print(" - ");
     Serial.println(dayIntToStr[i]);
